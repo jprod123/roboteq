@@ -28,16 +28,22 @@ void cb(sensor_msgs::Joy msg)
 	drive2.SetCommand(_GO, 1 ,left);
 	drive2.SetCommand(_GO, 2 , right);
 
-  dig.SetCommand(_GO, 1, msg.axes[2] * 1000);
-  dig.SetCommand(_GO, 2, msg.axes[3] * 1000);
+  dig.SetCommand(_GO, 1, msg.axes[3] * 1000);
+  dig.SetCommand(_GO, 2, msg.axes[4] * 1000);
 
-  if (msg.buttons[2])
-    dump.SetCommand(_GO, 1, 1000);
-  if (msg.buttons[3])
-    dump.SetCommand(_GO, 1 , -1000);
+  if (msg.buttons[5])
+    dump.SetCommand(_GO, 2, 1000);
+  if (msg.buttons[4])
+    dump.SetCommand(_GO, 2 , -1000);
+
+  int deploy;
+  if(msg.axes[2] != 1){
+    deploy = (msg.axes[2] - 1) * 500;
+  } else {
+    deploy = (msg.axes[5] + 1) * 500;
 }
-
-
+dump.SetCommand(_GO, 1, deploy); 
+}
 
 int main(int argc, char *argv[])
 {
