@@ -11,18 +11,30 @@
 #include <RoboteqDevice/Constants.h>
 #include <sensor_msgs/Joy.h>
 
-#include <std_msgs>
-
 using namespace std;
 
 
-void roboteq_cb(sensor_msgs::Joy::ConstPtr& msg)
+	RoboteqDevice drive1;
+	RoboteqDevice drive2;
+	RoboteqDevice dig;
+	RoboteqDevice dump;
+void cb(sensor_msgs::Joy msg)
 {
   int left = (msg.axes[0] * 1000);
   int right = (msg.axes[1] * 1000);
 
-	device.SetCommand(_GO, 1 ,left);
-	device.SetCommand(_GO, 2 , right);
+	drive1.SetCommand(_GO, 1 ,left);
+	drive1.SetCommand(_GO, 2 , right);
+	drive2.SetCommand(_GO, 1 ,left);
+	drive2.SetCommand(_GO, 2 , right);
+
+  dig.SetCommand(_GO, 1, msg.axes[2] * 1000);
+  dig.SetCommand(_GO, 2, msg.axes[3] * 1000);
+
+  if (msg.buttons[2])
+    dump.SetCommand(_GO, 1, 1000);
+  if (msg.buttons[3])
+    dump.SetCommand(_GO, 1 , -1000);
 }
 
 
@@ -32,32 +44,39 @@ int main(int argc, char *argv[])
 //	
  	ros::init(argc, argv, "talker");
 	ros::NodeHandle z;
-	ros::Subscriber sub = z.subscriber("roboteq_cb", 1000, pub;		 
-	ros::spin();
-
-	ros::Publisher	joyPublisher publisher = n.advertise(std_msgs::String>("publisher", 1000);
-
-	
-
 //
 	string response = "";
-	RoboteqDevice device;
-	int status = device.Connect("/dev/ttyACM0", 115200);
 
-	if(status != RQ_SUCCESS)
+	int drive1_status = drive1.Connect("/dev/ttyACM0");//, 115200);
+	int drive2_status = drive2.Connect("/dev/ttyACM1");//, 115200);
+	int dig_status = dig.Connect("/dev/ttyACM2");//, 115200);
+	int dump_status = dump.Connect("/dev/ttyACM3");//, 115200);
+
+	if(drive1_status != RQ_SUCCESS)
 	{
-		cout<<"Error connecting to device: "<<status<<"."<<endl;
+		cout<<"Error connecting to drive1"<<endl;
+		return 1;
+	}
+	if(drive2_status != RQ_SUCCESS)
+	{
+		cout<<"Error connecting to drive2: "<<endl;
+		return 1;
+	}
+	if(dig_status != RQ_SUCCESS)
+	{
+		cout<<"Error connecting to dig:"<<endl;
+		return 1;
+	}
+	if(dump_status != RQ_SUCCESS)
+	{
+		cout<<"Error connecting to dump: "<<endl;
 		return 1;
 	}
 
-	
-	cout<<"- SetCommand(_GO, 1, 1)...";
+	ros::Subscriber sub = z.subscribe("roboteq_cb",10, cb);
 
-	if((status = device.SetCommand(_GO, 1, 1)) != RQ_SUCCESS)
-		cout<<"failed --> "<<status<<endl;
-	else
-		cout<<"succeeded."<<endl;
-
-	device.Disconnect();
+  while(ros::ok()){
+    ros::spinOnce();
+  }
 	return 0;
 }
