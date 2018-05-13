@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="joy" type="joy_node" name="joy">
+    <param name="autorepeat_rate" type="double" value="20.0"/>
+  </node>
+  <node pkg="roboteq" type="roboteq_example" name="rmc">
+  </node>
+</launch>

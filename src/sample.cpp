@@ -20,10 +20,12 @@ using namespace std;
 	RoboteqDevice dump;
 void cb(sensor_msgs::Joy msg)
 {
+  int deploy = 0;
   int left = (msg.axes[0] * 1000);
   int right = (msg.axes[1] * 1000);
 
 	drive1.SetCommand(_GO, 1 ,left);
+ROS_INFO("sending %d", left);
 	drive1.SetCommand(_GO, 2 , right);
 	drive2.SetCommand(_GO, 1 ,left);
 	drive2.SetCommand(_GO, 2 , right);
@@ -33,15 +35,22 @@ void cb(sensor_msgs::Joy msg)
 
   if (msg.buttons[5])
     dump.SetCommand(_GO, 2, 1000);
-  if (msg.buttons[4])
+  else if (msg.buttons[4])
     dump.SetCommand(_GO, 2 , -1000);
+  else{
+	dump.SetCommand(_GO, 2, 0);
+	}
+    //
 
-  int deploy;
   if(msg.axes[2] != 1){
     deploy = (msg.axes[2] - 1) * 500;
-  } else {
-    deploy = (msg.axes[5] + 1) * 500;
+  } if (msg.axes[5] !=1){
+    deploy = (-1 * msg.axes[5] - 1) * -500;
 }
+if (msg.axes[5] == msg.axes[2]){
+deploy = 0;
+}
+
 dump.SetCommand(_GO, 1, deploy); 
 }
 
@@ -55,8 +64,8 @@ int main(int argc, char *argv[])
 
 	int drive1_status = drive1.Connect("/dev/ttyACM0");//, 115200);
 	int drive2_status = drive2.Connect("/dev/ttyACM1");//, 115200);
-	int dig_status = dig.Connect("/dev/ttyACM2");//, 115200);
-	int dump_status = dump.Connect("/dev/ttyACM3");//, 115200);
+	int dig_status = dig.Connect("/dev/ttyACM3");//, 115200);
+	int dump_status = dump.Connect("/dev/ttyACM2");//, 115200);
 
 	if(drive1_status != RQ_SUCCESS)
 	{
@@ -79,7 +88,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	ros::Subscriber sub = z.subscribe("roboteq_cb",10, cb);
+	ros::Subscriber sub = z.subscribe("joy",10, cb);
 
   while(ros::ok()){
     ros::spinOnce();
